@@ -125,7 +125,8 @@ def note_body_name(note_id, format, public=False):
     # We search for <a href="/joplin/joplin_ressources"> or <a href=":/">
     soup = BeautifulSoup(html)
     for link in soup.findAll('a'):
-        if "joplin_ressources" in link.get('href') or ":/" == link.get('href')[0:2]:
+        href = link.get('href')
+        if href and ("joplin_ressources" in href or ":/" == href[0:2]):
             mime_type_guess = mimetypes.guess_type(link.get_text())
             img = soup.new_tag("span", **{'class':mimetype_to_icon(mime_type_guess)})
             br = soup.new_tag("br")
