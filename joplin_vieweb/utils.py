@@ -101,7 +101,7 @@ def markdown_vieweb_to_joplin(md):
 
 def md_to_html(md, for_preview):
     html = markdown.markdown(md, extensions=[
-        'fenced_code', 'codehilite', 'toc', 'markdown.extensions.tables', 'pymdownx.mark', 'pymdownx.tabbed'])
+        'fenced_code', 'codehilite', 'toc', 'markdown.extensions.tables', 'pymdownx.mark', 'pymdownx.tabbed', 'nl2br'])
     
     # Transform [ ] and [x] to checkboxes.
     if for_preview:
