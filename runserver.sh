@@ -1,4 +1,4 @@
-#!/bin/sh -x
+#!/bin/sh
 
 django-admin startproject server .
 rm ./server/settings.py

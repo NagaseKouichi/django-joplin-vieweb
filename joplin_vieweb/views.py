@@ -35,10 +35,14 @@ def index(request):
     
 @conditional_decorator(login_required, settings.JOPLIN_LOGIN_REQUIRED)
 def notebooks(request):
-    joplin = Joplin()
-    joplin.parse_notebooks();
-    data = json.dumps(joplin.rootNotebook.children, default=lambda o: o.__dict__, indent=4)
-    return HttpResponse(data)
+    try:
+        joplin = Joplin()
+        joplin.parse_notebooks();
+        data = json.dumps(joplin.rootNotebook.children, default=lambda o: o.__dict__, indent=4)
+        return HttpResponse(data)
+    except Exception as e:
+        logging.error(f"Error retrieving notebooks: {e}")
+        return HttpResponse(status=500)
     
 @conditional_decorator(login_required, settings.JOPLIN_LOGIN_REQUIRED)
 def notes(request, notebook_id):

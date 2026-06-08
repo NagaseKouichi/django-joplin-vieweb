@@ -16,7 +16,8 @@ class Api():
         try:
             response: requests.models.Response = getattr(requests, method)(
                 f"{self.url}{path}",
-                json=data
+                json=data,
+                timeout=30
             )
             logging.debug(f"joplin-x-api: response {response.text}")
             response.raise_for_status()
