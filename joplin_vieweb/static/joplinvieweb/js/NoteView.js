@@ -8,6 +8,8 @@
  *  - "note_created", param: new_note_id
  *  - "note_displayed"
  *  - "note_deleted"
+ *  - 'note_notebook_selected', param: [note_id, notebook_id]
+ *  - 'todo_completed'
  */
 class NoteView extends EventEmitter {
     constructor(is_public=false) {
@@ -15,6 +17,8 @@ class NoteView extends EventEmitter {
         this.is_public = is_public;
         this.set_current_note_id(null);
         this.current_note_name = null;
+        this.search_note = null;
+        $(".joplin_search").on("click", () => this.search() );
     }
     
     /**
@@ -24,7 +28,7 @@ class NoteView extends EventEmitter {
         super.emit("cleared");
         $("#note_view").removeClass("border_note");
         $("#note_view").html("");
-        $("#note_view_header_left").html("");
+        this.enable_public_link(false);
         $("#note_view_header_right").html("");
         $("#note_header_title").html("...");
         this.set_current_note_id(null);
@@ -45,13 +49,14 @@ class NoteView extends EventEmitter {
             this.reload_note_tags(note_id)
             this.tags.get_note_tags(note_id);
         });
+        this.tags.on("display_public_link", () => this.enable_public_link(true));
         this.tags.set_note_id(note_id);
     }
     
     /**
      *
      */
-    get_note(note_id, note_name) {
+    get_note(note_id, note_name, is_todo, todo_completed) {
         this.clear();
         this.reload_note_tags(note_id);
         display_progress($("#note_view"));
@@ -59,12 +64,12 @@ class NoteView extends EventEmitter {
         $.get(
         '/joplin/notes/' + note_id + "/",
         (data) => {
-                    this.set_current_note_id(note_id);
-                    this.current_note_name = note_name;
-                    this.tags.get_note_tags(note_id);
-                    super.emit("note_displayed");
-                    this.display_note(data, note_name);
-                  }
+            this.set_current_note_id(note_id);
+            this.current_note_name = note_name;
+            this.tags.get_note_tags(note_id);
+            super.emit("note_displayed");
+            this.display_note(data, note_name, is_todo, todo_completed);
+            }
         )  .fail(() => {
             clear_progress($("#note_view"));
             console.log("error while getting note " + note_id );
@@ -72,41 +77,79 @@ class NoteView extends EventEmitter {
                 '/joplin/note_error/',
                 (data) => {
                         this.display_note_error(data, note_name);
-                        $("#note_view").find(".icon-refresh").on("click", () => this.get_note(note_id, note_name) );
+                        $("#note_view").find(".icon-refresh").on("click", () => this.get_note(note_id, note_name, is_todo, todo_completed) );
                     }
             )
       });  
+    }
+
+
+    /**
+     * 
+     */
+    mark_todo(note_id, completed) {
+        $.ajax({
+            url: '/joplin/notes/' + note_id + "/mark_todo",
+            type: 'post',
+            contentType: 'application/json; charset=utf-8',
+            data: JSON.stringify({"completed": completed, "note_name": this.current_note_name}),
+            headers: { "X-CSRFToken": csrftoken },
+            complete: () => {
+                super.emit("todo_completed");
+            }
+        });
     }
     
     /**
      *
      */
-    display_note(data, note_name) {
-        clear_progress($("#note_view"));
+    display_note(data, note_name, is_todo, todo_completed, force_public=false) {
+        let note_view_element = $("#note_view");
+        clear_progress(note_view_element);
+        note_view_element.html(data);
+        render_latex(note_view_element.get(0)); // Must be first ! Otherwise, break the following js interactions.
         $("#note_header_title").html(note_name);
-        if (this.is_public == false) {
+        if ((this.is_public == false) && (force_public == false)) {
             $("#note_view_header_right").append('<span id="note_edit_delete" class="note_edit_icon icon-trash-o"></span>');
             $("#note_edit_delete").on("click", () => { this.note_delete(this.current_note_id, note_name); });
             $("#note_view_header_right").append('<span id="note_edit_edit" class="note_edit_icon icon-pencil"></span>');
-            $("#note_edit_edit").on("click", () => { this.note_edit(this.current_note_id, note_name); });
+            $("#note_edit_edit").on("click", () => { this.note_edit(this.current_note_id, note_name, is_todo); });
         }
-        $("#note_view").html(data);
-        $("#note_view").addClass("border_note");
-        if ($("#note_view").find(".toc").html().includes("li") == false) {
-            $("#note_view").find(".toc").remove();
+        if (is_todo) {
+            if (todo_completed == false) {
+                $("#note_view_header_right").append('<span id="note_todo_mark_as_done" \
+                class="icon-check-square-o note_edit_icon" title="Mark as done"></span>');
+                if (this.is_public == false) {
+                    $("#note_todo_mark_as_done").on("click", () => { this.mark_todo(this.current_note_id, true); });
+                }
+            } else {
+                $("#note_view_header_right").append('<span id="note_todo_mark_as_done" \
+                class="icon-checkbox-unchecked note_edit_icon" title="Mark as todo"></span>');
+                if (this.is_public == false) {
+                    $("#note_todo_mark_as_done").on("click", () => { this.mark_todo(this.current_note_id, false); });
+                }
+            }
         }
-        else {
-            $("#note_view").find(".toc").append('<div class="toc_ctrl"><span id="number_btn">#</span><span id="toggle_toc_btn"  class="icon-chevron-circle-down"></span> <span onclick="$(\'.toc\').remove();" class="icon-times-circle"></span>&nbsp;</div>');
-            $("#note_view").find(".toc").prepend('<center style="display: none;" id="toc_title">Content</center>');
-            let note_view_position = $('#note_view').position();
-            $(".toc").css("top", "calc(" + note_view_position.top.toString() + "px + 0.8em + 25px)");
-            $(".toc").css("right", "20px");
-            this.number_displayed = false;
-            $("#number_btn").on("click", (ev) => this.toggle_number());
-            $("#toggle_toc_btn").on("click", (ev) => this.toggle_toc(ev));
+        note_view_element.addClass("border_note");
+        let toc = note_view_element.find(".toc");
+        if (toc.length > 0) {
+            if (toc.html().includes("li") == false) {
+                toc.remove();
+            }
+            else {
+                toc.append('<div class="toc_ctrl"><span id="number_btn">#</span><span id="toggle_toc_btn"  class="icon-chevron-circle-down"></span> <span onclick="$(\'.toc\').remove();" class="icon-times-circle"></span>&nbsp;</div>');
+                toc.prepend('<center style="display: none;" id="toc_title">Content</center>');
+                let note_view_position = $('#note_view').position();
+                let note_view_top = note_view_position ? note_view_position.top : 0;
+                toc.css("top", "calc(" + note_view_top.toString() + "px + 0.8em + 25px)");
+                toc.css("right", "20px");
+                this.number_displayed = false;
+                $("#number_btn").on("click", (ev) => this.toggle_number());
+                $("#toggle_toc_btn").on("click", (ev) => this.toggle_toc(ev));
+            }
         }
 
-        $("#note_view").find(".codehilite").append('<center class="expend_code"><i>Click to expand...</i></center><div class="code_ctrl"><span class="toggle_code_btn icon-chevron-circle-down"></span></div>')
+        note_view_element.find(".codehilite").append('<center class="expend_code"><i>Click to expand...</i></center><div class="code_ctrl"><span class="toggle_code_btn icon-chevron-circle-down"></span></div>')
         $(".toggle_code_btn").on("click", (ev) => { // Let's fold
             this.fold_code($(ev.currentTarget));
         });
@@ -129,12 +172,13 @@ class NoteView extends EventEmitter {
         $("#note_view a").each((index, el) => {
             let current_link = $(el);
             let href = current_link.attr('href');
-            if (href.startsWith("https://") || href.startsWith("http://")) {
+            if (href && (href.startsWith("https://") || href.startsWith("http://"))) {
                 current_link.hover((event) => { this.display_hyperlink_preview(event); }, 
                                    (event) => { this.hide_hyperlink_preview(event); })
             }
         });
     }
+
 
     /**
      * 
@@ -348,7 +392,7 @@ class NoteView extends EventEmitter {
     /**
      *
      */
-    note_edit(note_id, note_name) {
+    note_edit(note_id, note_name, is_todo) {
         this.clear();
         display_progress($("#note_view"));
 
@@ -368,7 +412,7 @@ class NoteView extends EventEmitter {
             })
         ).then(() => {
             super.emit("note_edit_started");
-            let note_editor = new NoteEditor(note_id, note_name, session_id);
+            let note_editor = new NoteEditor(note_id, note_name, session_id, is_todo);
             note_editor.init(md);
             note_editor.on("cancel", () => {
                 super.emit("note_edit_finished", false);
@@ -477,7 +521,34 @@ class NoteView extends EventEmitter {
         return html;
     }
 
+    /**
+     * Add or remove public link in the left header
+     */
+    enable_public_link(enable) {
+        if (enable) {
+            $("#note_view_header_left").append('<a class="public_link" href="/joplin/notes/public/' + this.current_note_id + '" target="_blank"><span class="icon-link"></a>');
+        }
+        else {
+            $(".public_link").remove();
+        }
+    }
+
+    /**
+     * Display the search "note"
+     */
+    search() {
+        if ((this.search_note != null) && (this.search_note._searching)) {
+            return;
+        }
+        this.search_note = new Search();
+        this.clear();
+        this.search_note.on("display search note", (data) => {
+            this.display_note(data, "Search your notes...", false, false, true);
+        });
+        this.search_note.on("note_notebook_selected", (note_notebook_ids) => {
+            super.emit("note_notebook_selected", note_notebook_ids);
+        });
+        this.search_note.init();
+    }
 }
-
-
 

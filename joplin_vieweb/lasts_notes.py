@@ -7,6 +7,7 @@ if __name__ == "__main__":
       settings.configure(
           JOPLIN_JOPLINVIEWEB_PATH="c:\\Users\\FRGUNI0\\temp\\XXX\\", JOPLIN_NOTES_HISTORY_DEPTH=10)
 
+
 class LastsNotes:
     __lock = threading.Lock()
     HISTORY_DEPTH = settings.JOPLIN_NOTES_HISTORY_DEPTH
@@ -23,7 +24,14 @@ class LastsNotes:
             if not lasts_path.exists():
                 return "[]"
             with open(lasts_path, "r") as lasts_notes_mapping:
-                return lasts_notes_mapping.read()
+                lasts = json.loads(lasts_notes_mapping.read())
+                for one_note in lasts:
+                    try:
+                        one_note["is_todo"]
+                    except:  # noqa: handle management of tags for notes created before.
+                        one_note["is_todo"] = False
+                        one_note["todo_completed"] = False
+                return json.dumps(lasts)
 
     @staticmethod
     def write_lasts_notes(lasts):
@@ -33,7 +41,7 @@ class LastsNotes:
                 lasts_notes_mapping.write(json.dumps(lasts))
 
     @staticmethod
-    def set_last(note_id, note_name):
+    def set_last(note_id, note_name, is_todo, todo_completed):
         lasts = json.loads(LastsNotes.read_lasts_notes())
 
         # remove item note_id if already present
@@ -47,9 +55,9 @@ class LastsNotes:
         if target_index != -1:
             del lasts[target_index]
 
-        # create an new list with new item, and update ranks of followers
+        # create a new list with new item, and update ranks of followers
         new_lasts = [{"id": note_id, "title": note_name,
-                      "pinned": target_pinned, "rank": 1}]
+                      "pinned": target_pinned, "rank": 1, "is_todo": is_todo, "todo_completed": todo_completed}]
         rank = 2
         for one in lasts:
             one["rank"] = rank
@@ -132,7 +140,6 @@ class LastsNotes:
         lasts = LastsNotes.order_lasts(lasts)
 
         LastsNotes.write_lasts_notes(lasts)
-                
 
 
 # for test:

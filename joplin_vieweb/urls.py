@@ -18,6 +18,7 @@ urlpatterns = [
     path('notes/public/<note_id>/', views.public_note, name='public note'),
     path('notes/public/data/<note_id>/', views.public_note_data, name='public note data'),
     path('notes/<note_id>/tags', views.note_tags, name='note'),
+    path('notes/<note_id>/mark_todo', views.mark_todo, name='mark_todo'),
     path('notes/<note_id>/checkboxes', views.note_checkboxes, name='update note checkboxes'),
     path('notes/<note_id>/pin', views.pin_note, name='pin a note'),
     path('notes/<note_id>/unpin', views.unpin_note, name='pin a note'),
@@ -42,5 +43,8 @@ urlpatterns = [
     path('edit_session_ressource/<str:session_id>/<str:file>', views.edit_session_ressource, name='get session ressource'),
     path('markdown_render/', views.render_markdown, name='render_markdown'),
     path('config/', views.config, name='config'),
-    path('config/test/', views.config_test, name='test config')
+    path('config/test/', views.config_test, name='test config'),
+    path('logout', views.joplin_logout, name='logout'),
+    path('search_html', views.search_html, name="search_html"),
+    path('search/<str:query>', views.search, name="search")
 ]

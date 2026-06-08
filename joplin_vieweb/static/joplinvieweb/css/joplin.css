@@ -4,6 +4,9 @@ html, body {
     font-family: Tahoma, sans-serif;
     font-size: 0.9em;
 }
+.orange {
+    color: #ff4411;
+}
 #joplin_container {
     display: flex;
     align-items: stretch;
@@ -88,6 +91,10 @@ html, body {
     float: left;
     text-decoration: none;
     color:#ff4411;
+}
+.joplin_search {
+    margin-right: 5px;
+    cursor: pointer;
 }
 #notebooks_tree_inner {
     padding-left: 10px;
@@ -185,6 +192,9 @@ animation-name: rotate_sync;
     display:flex;
     flex-direction: column;
 }
+#notes_list_ctn [data-todo-completed="true" i] {
+    color: gray;
+}
 .notes_list {
     height: 100%;
 }
@@ -229,6 +239,7 @@ animation-name: rotate_sync;
     height: 100%;
     float: left;
     white-space: nowrap;
+    display: flex;
 }
 .toolbox_float_right {
     position: absolute;
@@ -350,12 +361,12 @@ animation-name: rotate_sync;
     background: #cecece;
 }
 #note_view h1 { color: #ff4411; font-size: 1.5em; font-family: 'Signika', sans-serif; padding-bottom: 10px; }
-#note_view h2 { color: #ff4411; font-size: 1.4em; font-family: 'Signika', sans-serif; padding-bottom: 10px; }
-#note_view h3 { color: #ff4411; font-size: 1.3em; font-family: 'Signika', sans-serif; padding-bottom: 10px; }
-#note_view h4 { color: #ff4411; font-size: 1.2em; font-family: 'Signika', sans-serif; padding-bottom: 10px; }
-#note_view h5 { color: #ff4411; font-size: 1em; font-family: 'Signika', sans-serif; padding-bottom: 10px; }
-#note_view h6 { color: #ff4411; font-size: 0.9em; font-family: 'Signika', sans-serif; padding-bottom: 10px; }
-#note_view p { font-family: 'Inder', sans-serif; line-height: 28px; margin-bottom: 15px; }
+#note_view h2 { color: #ff4411; font-size: 1.4em; font-family: 'Signika', sans-serif; padding-bottom: 10px; padding-left: 1em;}
+#note_view h3 { color: #ff4411; font-size: 1.3em; font-family: 'Signika', sans-serif; padding-bottom: 10px; padding-left: 2em;}
+#note_view h4 { color: #ff4411; font-size: 1.2em; font-family: 'Signika', sans-serif; padding-bottom: 10px; padding-left: 3em;}
+#note_view h5 { color: #ff4411; font-size: 1em; font-family: 'Signika', sans-serif; padding-bottom: 10px; padding-left: 4em;}
+#note_view h6 { color: #ff4411; font-size: 0.9em; font-family: 'Signika', sans-serif; padding-bottom: 10px; padding-left: 5em;}
+#note_view p { font-family: 'Inder', sans-serif; }
 #note_view a:not(.toc a) { color: #ff4411; transition: .5s; -moz-transition: .5s; -webkit-transition: .5s; -o-transition: .5s;}
 #note_view a:not(.toc a):hover { color: #a03c21 }
 #note_view img:not(.hlp-img img) {max-height: 100vh; max-width: 100%; height: auto; width: auto;}
@@ -363,6 +374,8 @@ animation-name: rotate_sync;
 #note_view td, th { border: 1px solid #aaaaaa; padding-left: 1em; padding-right: 1em;}
 #note_view th {  background-color: rgba(255,68,17,0.25);}
 #note_view tr:hover {color: #ff4411;}
+#note_view li p {margin: 0; line-height: inherit;}
+#note_view .error { color:#e608b9; }
 
 .border_note {border-right: 1px solid #ff4411; border-left: 1px solid #ff4411;}
 
@@ -461,3 +474,28 @@ body.loading .waiting {
     overflow: hidden;
     display: block;
 }
+#logout {
+    position:absolute;
+    top: 0px;
+    right: 0px;
+    z-index: 100;
+    cursor: pointer;
+    height: 10px;
+    width: 10px;
+    opacity: 0;
+    font-size: 1em;
+    overflow: hidden;
+    padding-top: 2px;
+    color: #ff4411;
+}
+.btn {
+    border: 1px solid #f41;
+    border-radius: 5px;
+    background-color: #f41;
+    color: whitesmoke;
+    box-shadow: 2px 2px 2px #f414;
+    display: inline-block;
+    padding: 2px 20px 2px 20px;
+    cursor: pointer;
+}
+#note_editor_type { font-size: 0.7em; vertical-align: middle; padding-bottom: 0.3em; }

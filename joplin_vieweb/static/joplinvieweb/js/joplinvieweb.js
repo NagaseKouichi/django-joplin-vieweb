@@ -4,6 +4,7 @@ class JoplinVieweb {
         this.note_view = new NoteView();
         this.side_bar = new SideBar();
         this.notes_list = new NotesList();
+        this.handle_logout();
         
         this.route_the_events();
 
@@ -12,12 +13,29 @@ class JoplinVieweb {
     }
 
     register_edit_keys() {
-        $(document).keydown(function (event) {
-            //console.log(event.ctrlKey + " " + event.which)
+        $(document).keydown((event) => {
+            // console.log(event.ctrlKey + " " + event.which);
+
+            // is f pressed ?
+            if (event.which == 70 && !event.metaKey && !event.altKey && !event.ctrlKey && !event.shiftKey) {
+                let note_tags_edition_displayed = ($('#add_tag_edit').length !== 0);
+                let settings_screen_displayed = ($('#config_form').length !== 0);
+                let modal_displayed = ($('.modal[style*="display: inline-block"]').length !== 0);
+                let note_edition_ongoing = ($("#note_edit_commit").length !== 0);
+                let search_ongoing = (this.note_view.search_note != null) && (this.note_view.search_note.search_ongoing());
+                if (!modal_displayed && !note_tags_edition_displayed && !note_edition_ongoing && !search_ongoing && !settings_screen_displayed) {
+                    $(".joplin_search").click();
+                    event.preventDefault();
+                }
+            }
+
             // is e pressed without modifiers?
             if (event.which == 69 && !event.metaKey && !event.altKey && !event.ctrlKey && !event.shiftKey) {
                 let pencil = $("#note_edit_edit");
-                if (pencil.length) {
+                let note_tags_edition_displayed = ($('#add_tag_edit').length !== 0);
+                let pencil_displayed = (pencil.length !== 0);
+                let modal_displayed = ($('.modal[style*="display: inline-block"]').length !== 0);
+                if (pencil_displayed && !modal_displayed && !note_tags_edition_displayed) {
                     pencil.click();
                     event.preventDefault();
                 }
@@ -63,14 +81,9 @@ class JoplinVieweb {
         this.side_bar.on("please hide notes history", () => { this.notes_list.hide_lasts() });
         this.side_bar.on("please show notes history", () => { this.notes_list.show_lasts() });
         this.side_bar.on("get sync configuration", () => { this.get_synch_config(); });
-        this.notes_list.on("note_selected", (note_data) => { this.note_view.get_note(note_data[0], note_data[1]) });
+        this.notes_list.on("note_selected", (note_data) => { this.note_view.get_note(note_data[0], note_data[1], note_data[2], note_data[3]) });
         this.notes_list.on("note_creation_request", () => { this.create_note(); } );
-        this.notes_list.on("note_notebook_selected", (selection) => {
-            let note_id = selection[0];
-            let notebook_id = selection[1];
-            this.side_bar.select_notebook(notebook_id);
-            this.notes_list.refresh_and_select_note_from_notebook(note_id, notebook_id);
-        });
+        this.notes_list.on("note_notebook_selected", (selection) => { this.select_note_and_notebook(selection); });
         this.note_view.on("tags_changed", () => {
             this.side_bar.set_sync_dirty();
             this.side_bar.get_tags_from_server()}
@@ -80,9 +93,14 @@ class JoplinVieweb {
         this.note_view.on("cleared", () => { this.note_edition_set_ongoing(false); });
         this.note_view.on("note_edit_finished", (dirty) => {
             this.note_edition_set_ongoing(false);
+            this.note_view.clear();
+            this.notes_list.refresh_and_select();
             if (dirty) {
                 this.side_bar.set_sync_dirty();
             }
+            
+        });
+        this.note_view.on("todo_completed", () => {
             this.note_view.clear();
             this.notes_list.refresh_and_select();
         });
@@ -96,7 +114,10 @@ class JoplinVieweb {
         });
         this.note_view.on("note_deleted", () => {
             this.notes_list.get_lasts_notes();
-        })
+            this.note_view.clear();
+            this.notes_list.refresh_and_select();
+        });
+        this.note_view.on("note_notebook_selected", (selection) => { this.select_note_and_notebook(selection); });
     }
     
     init() {
@@ -141,14 +162,42 @@ class JoplinVieweb {
             '/joplin/config/',
             (data) => {
                 $("body").removeClass("loading");
-                this.note_view.display_note(data, "Joplin Vieweb configuration");
+                this.note_view.display_note(data, "Joplin Vieweb configuration", false, false, true);
                 this.config_manager = new Configuration();
                 this.config_manager.init();
             }).fail(() => {
+                $("body").removeClass("loading");
                 clear_progress($("#note_view"));
                 console.log("error while getting conf");
                 this.note_view.display_note_error("Error while getting configuration.", "Joplin Vieweb configuration");
           });
+    }
+
+    handle_logout() {
+        $("#logout").hover( /* mousenter */ () => {
+            $("#logout").css("opacity", "1");
+            $("#logout").css("height", "32px");
+            $("#logout").css("width", "32px");
+            $("#logout").css("font-size", "28px");
+            $("#logout .icon-exit").on("click", () => {
+                $("body").addClass("loading");
+                $.get('/joplin/logout').always(() => { window.location.replace("") });
+            })
+        },
+        /* mouseexit */ () => {
+            $("#logout").css("opacity", "0");
+            $("#logout").css("height", "10px");
+            $("#logout").css("width", "10px");
+            $("#logout").css("font-size", "1em");
+            $("#logout .icon-exit").off();
+        } );
+    }
+
+    select_note_and_notebook(selection) {
+        let note_id = selection[0];
+        let notebook_id = selection[1];
+        this.side_bar.select_notebook(notebook_id);
+        this.notes_list.refresh_and_select_note_from_notebook(note_id, notebook_id);
     }
 
 }

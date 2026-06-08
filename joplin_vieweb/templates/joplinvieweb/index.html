@@ -16,6 +16,10 @@
 <link rel="stylesheet" href="{% static 'joplinvieweb/css/popup.css' %}" />
 <link rel="stylesheet" href="{% static 'joplinvieweb/css/pymdown_tab.css' %}" />
 <link rel="stylesheet" href="{% static 'joplinvieweb/css/hyperlink_preview.css' %}" />
+<link rel="stylesheet" href="{% static 'joplinvieweb/css/katex.min.css' %}" />
+<script defer src="{% static 'joplinvieweb/js/katex.min.js' %}"></script>
+<script defer src="{% static 'joplinvieweb/js/katex-auto-render.js' %}"></script>
+<script defer src="{% static 'joplinvieweb/js/joplin-katex.js' %}"></script>
 <script>
     var number_header_css_path = "{% static "joplinvieweb/css/number.css" %}"
 </script>
@@ -30,6 +34,7 @@
 <script src="{% static 'joplinvieweb/js/SideBar.js' %}"></script>
 <script src="{% static 'joplinvieweb/js/easymde.min.js' %}"></script>
 <script src="{% static 'joplinvieweb/js/NoteEditor.js' %}"></script>
+<script src="{% static 'joplinvieweb/js/Search.js' %}"></script>
 <script src="{% static 'joplinvieweb/js/NoteView.js' %}"></script>
 <script src="{% static 'joplinvieweb/js/config.js' %}"></script>
 <script src="{% static 'joplinvieweb/js/joplinvieweb.js' %}"></script>
@@ -40,6 +45,8 @@
 const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
 </script>
 <body>
+
+<div id="logout"><span class="icon-exit"></span></div>
 
 
 <div id="joplin_container">
@@ -109,7 +116,7 @@ const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
     </div>
     <div id="note_view_ctn">
         <div class="note_view_header header">
-            <div id="note_view_header_left" class="toolbox_float_left"></div>
+            <div id="note_view_header_left" class="toolbox_float_left"><span class="icon-search joplin_search"></span></div>
             <div id="note_view_header_right" class="toolbox_float_right"></div>
             <span id="note_header_title"></span>
         </div>

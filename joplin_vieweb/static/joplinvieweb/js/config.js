@@ -3,9 +3,14 @@ class Configuration {
         $("#config_form").submit((event) => { this.submit(event); })
         $("#test_btn").click(() => { this.test() });
 
+
         /**
          * On target combo changed
          */
+        this.current_target = $("#id_target").val();
+        if (this.current_target != "8") {
+            $("#config_s3_fields").hide();
+        }
         $("#id_target").change((event) => {
             this.form_fields(event.target.value);
             
@@ -78,12 +83,30 @@ class Configuration {
     }
 
     /**
-     * 
+     * React to target selection change
      */
      form_fields(selected_value) {
+        if (this.current_target != selected_value) {
+            this.current_target = selected_value;
+            $("#id_path").val("");
+            $("#id_username").val("");
+            $("#id_password").val("");
+            if (this.current_target == "8") {
+                $("#config_url_tip").html("");
+                $("#config_s3_fields").show();
+                $("#id_s3bucket").prop("required", true);
+                $("#id_s3region").prop("required", true);
+            }
+            else {
+                $("#config_url_tip").html("Url is like that: https://your.nextcloud.com/remote.php/dav/files/user/Documents/JoplinSynchro<br>");
+                $("#config_s3_fields").hide();
+                $("#id_s3bucket").prop("required", false);
+                $("#id_s3region").prop("required", false);
+            }
+        }
         let fields = $("#config_fields");
         let test_btn = $("#test_btn");
-        if (selected_value != "5") {
+        if ((selected_value != "5") && (selected_value != "9") && (selected_value != "6") && (selected_value != "8")) {
            fields.addClass("disabled");
            test_btn.prop("disabled",true)
            fields.find(":input").attr("disabled", true);
@@ -93,6 +116,12 @@ class Configuration {
             fields.removeClass("disabled");
             test_btn.prop("disabled",false)
             fields.find(":input").attr("disabled", false);
+        }
+        if (selected_value != "5") {
+            $("#test_btn").hide();
+        }
+        else {
+            $("#test_btn").show();
         }
     }
 
